@@ -93,7 +93,7 @@ create table goods
     id                  bigint          not null        auto_increment                          comment '主键id',
     category_id         bigint          not null                                                comment '所属商品分类ID',
     brand_id            bigint          not null                                                comment '所属品牌ID',
-    goods_code          varchar(63)     not null        unique                                  comment '商品编号',
+    goods_code          varchar(63)     not null        unique                                  comment '商品编号(SPU)',
     name                varchar(127)    not null                                                comment '商品名称',
     keywords            varchar(1023)                                                           comment '商品关键字，以json数组格式',
     gallery             varchar(2047)   not null                                                comment '商品宣传图片列表，采用json数组格式',
@@ -123,9 +123,9 @@ create index goods_name on user (name);
 
 
 /* ====================================================================================================================
-    product_attribute -- 货品属性(货品本身属性不可选择，区别于货品规格)
+    goods_attribute -- 商品属性(商品属性不可选择，区别于商品规格)
 ==================================================================================================================== */
-create table product_attribute
+create table goods_attribute
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
     attribute_name      varchar(63)     not null                                                comment '属性名称',
@@ -133,37 +133,37 @@ create table product_attribute
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = '货品属性(货品本身属性不可选择，区别于货品规格)';
-create index product_attribute_attribute_name on user (attribute_name);
+) comment = '商品属性(商品属性不可选择，区别于货品规格)';
+create index goods_attribute_attribute_name on user (attribute_name);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
 
 
 /* ====================================================================================================================
-    product_attribute_option -- 货品属性选项值
+    goods_attribute_option -- 商品属性选项值
 ==================================================================================================================== */
-create table product_attribute_option
+create table goods_attribute_option
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    attribute_id        bigint          not null                                                comment '货品属性ID',
+    attribute_id        bigint          not null                                                comment '商品属性ID',
     -- attribute_name      varchar(63)     not null                                                comment '属性名称(只能取product_attribute表)',
-    option_value        varchar(63)     not null                                                comment '货品属性选项值',
+    option_value        varchar(63)     not null                                                comment '商品属性选项值',
     sort_order          int             not null        default 1000                            comment '排序',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = '货品属性选项值';
-create index product_attribute_option_attribute_id on user (attribute_id);
+) comment = '商品属性选项值';
+create index goods_attribute_option_attribute_id on user (attribute_id);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
 
 
 /* ====================================================================================================================
-    product_specification -- 货品规格(可以选择，区别于货品属性)
+    goods_specification -- 商品规格(可以选择，区别于商品属性)
 ==================================================================================================================== */
-create table product_specification
+create table goods_specification
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
     specification_name  varchar(63)     not null                                                comment '规格名称',
@@ -171,28 +171,28 @@ create table product_specification
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = '货品规格(可以选择，区别于货品属性)';
-create index product_specification_specification_name on user (specification_name);
+) comment = '商品规格(可以选择，区别于商品属性)';
+create index goods_specification_specification_name on user (specification_name);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
 
 
 /* ====================================================================================================================
-    product_specification -- 货品规格选项值
+    goods_specification_option -- 商品规格选项值
 ==================================================================================================================== */
-create table product_specification_option
+create table goods_specification_option
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    specification_id    bigint          not null                                                comment '货品规格ID',
-    option_value        varchar(63)     not null                                                comment '货品规格选项值',
+    specification_id    bigint          not null                                                comment '商品规格ID',
+    option_value        varchar(63)     not null                                                comment '商品规格选项值',
     -- specification_name  varchar(63)     not null                                                comment '规格名称',
     sort_order          int             not null        default 1000                            comment '排序',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = '货品规格选项值';
-create index product_specification_option_specification_id on user (specification_id);
+) comment = '商品规格选项值';
+create index goods_specification_option_specification_id on user (specification_id);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
@@ -204,50 +204,148 @@ create index product_specification_option_specification_id on user (specificatio
 create table goods_product
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    parent_id           bigint          not null                                                comment '父级编号,根节点的父级编号是：-1',
-    full_path           varchar(255)    not null                                                comment '树结构的全路径用“-”隔开,包含自己的id,不包含-1',
-    level               int             not null                                                comment '分类层级',
-    name                varchar(63)     not null        unique                                  comment '分类名称',
-    keywords            varchar(1023)                                                           comment '分类关键字，以json数组格式',
-    description         varchar(255)                                                            comment '分类广告语介绍',
-    icon_url            varchar(255)                                                            comment '分类图标',
-    pic_url             varchar(255)                                                            comment '分类图片',
-    sort_order          int             not null        default 1000                            comment '排序',
+    goods_id            bigint          not null                                                comment '商品ID',
+    product_code        varchar(63)     not null        unique                                  comment '货品编号(SKU)',
+    cost_price          decimal(10,2)   not null                                                comment '成品价',
+    original_price      decimal(10,2)   not null                                                comment '原价',
+    price               decimal(10,2)   not null                                                comment '销售价格',
+    inventory           int             not null        default 0                               comment '货品库存',
+    pic_url             varchar(255)    not null                                                comment '货品图片',
+    specifications      varchar(2047)   not null                                                comment '货品规格值列表，采用json数组格式',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
 ) comment = '货品信息';
 create index goods_product_ on user ();
 /*------------------------------------------------------------------------------------------------------------------------
-create table `litemall_goods_product` (
-  `id` int(11) not null auto_increment,
-  `goods_id` int(11) not null default '0' comment '商品表的商品id',
-  `specifications` varchar(1023) not null comment '商品规格值列表，采用json数组格式',
-  `price` decimal(10,2) not null default '0.00' comment '商品货品价格',
-  `number` int(11) not null default '0' comment '商品货品数量',
-  `url` varchar(125) default null comment '商品货品图片',
-  `add_time` datetime default null comment '创建时间',
-  `update_time` datetime default null comment '更新时间',
-  `deleted` tinyint(1) default '0' comment '逻辑删除',
-  primary key (`id`)
-) engine=innodb auto_increment=251 default charset=utf8mb4 comment='商品货品表';
+
 --------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    goods_goods_attribute -- 商品-商品属性关联
+==================================================================================================================== */
+create table goods_goods_attribute
+(
+    goods_id            bigint          not null                                                comment '商品ID',
+    attribute_id        bigint          not null                                                comment '商品属性ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (goods_id, attribute_id)
+) comment = '商品-商品属性关联';
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    product_goods_specification -- 货品-商品规格关联
+==================================================================================================================== */
+create table product_goods_specification
+(
+    product_id          bigint          not null                                                comment '货品ID',
+    specification_id    bigint          not null                                                comment '商品规格ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (product_id, specification_id)
+) comment = '货品-商品规格关联';
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    category_goods_attribute -- 商品分类-商品属性关联(只用作辅助提示使用)
+==================================================================================================================== */
+create table category_goods_attribute
+(
+    category_id         bigint          not null                                                comment '商品分类ID',
+    attribute_id        bigint          not null                                                comment '商品属性ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (category_id, attribute_id)
+) comment = '商品分类-商品属性关联(只用作辅助提示使用)';
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+   category_goods_specification -- 商品分类-商品规格关联(只用作辅助提示使用)
+==================================================================================================================== */
+create table category_goods_specification
+(
+    category_id         bigint          not null                                                comment '商品分类ID',
+    specification_id    bigint          not null                                                comment '商品规格ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (category_id, specification_id)
+) comment = '商品分类-商品规格关联(只用作辅助提示使用)';
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    user_collect -- 用户收藏
+==================================================================================================================== */
+create table user_collect
+(
+    id                  bigint          not null        auto_increment                          comment '主键id',
+    username            varchar(63)     not null                                                comment '登录名',
+    collect_type        int(1)          not null        default 0                               comment '收藏类型，0：商品ID；1：如果type=专题ID',
+    collect_id          bigint          not null                                                comment '收藏数据ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = '用户收藏';
+create index user_collect_username on user (username);
+create index user_collect_collect_id on user (collect_id);
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    related_goods -- 相关商品
+==================================================================================================================== */
+create table aaa
+(
+    goods_id            bigint          not null                                                comment '商品ID',
+    related_goods_id    bigint          not null                                                comment '关联商品ID',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (goods_id, related_goods_id)
+) comment = '相关商品';
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
+
+shop_cart
 
 
+/* ====================================================================================================================
+    goods_issue -- 商品问题
+==================================================================================================================== */
+create table goods_issue
+(
+    id                  bigint          not null        auto_increment                          comment '主键id',
+    username            varchar(63)     not null                                                comment '登录名',
+    goods_id            bigint          not null                                                comment '商品ID',
+    question_text       varchar(255)    not null                                                comment '问题内容',
+    answer_text         varchar(255)    not null                                                comment '回答内容',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
+    sort_order          int             not null        default 1000                            comment '排序',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = 'goods_issue';
+create index goods_issue_username on user (username);
+create index goods_issue_goods_id on user (goods_id);
+/*------------------------------------------------------------------------------------------------------------------------
 
-
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
 
