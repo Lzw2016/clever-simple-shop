@@ -1,10 +1,6 @@
 create database if not exists `clever-simple-shop` default character set = utf8mb4;
 use `clever-simple-shop`;
 
-/*
-    del_flag            int(1)          not null        default 1                               comment '删除标记（1：正常；2：删除；3：审核）',
-*/
-
 /* ====================================================================================================================
     user -- 用户表
 ==================================================================================================================== */
@@ -36,9 +32,9 @@ create index user_nickname on user (nickname);
 
 
 /* ====================================================================================================================
-    product_brand -- 品牌信息
+    brand -- 品牌信息
 ==================================================================================================================== */
-create table product_brand
+create table brand
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
     name                varchar(127)    not null        unique                                  comment '品牌称',
@@ -51,7 +47,7 @@ create table product_brand
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
 ) comment = '品牌信息';
-create index product_brand_name on user (name);
+create index brand_name on user (name);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
@@ -92,7 +88,7 @@ create table goods
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
     category_id         bigint          not null                                                comment '所属商品分类ID',
-    brand_id            bigint          not null                                                comment '所属品牌ID',
+    brand_name          varchar(63)     not null                                                comment '所属品牌名称',
     goods_code          varchar(63)     not null        unique                                  comment '商品编号(SPU)',
     name                varchar(127)    not null                                                comment '商品名称',
     keywords            varchar(1023)                                                           comment '商品关键字，以json数组格式',
@@ -113,7 +109,7 @@ create table goods
     primary key (id)
 ) comment = '商品基本信息';
 create index goods_category_id on user (category_id);
-create index goods_brand_id on user (brand_id);
+create index goods_brand_name on user (brand_name);
 create index goods_goods_code on user (goods_code);
 create index goods_name on user (name);
 /*------------------------------------------------------------------------------------------------------------------------
@@ -599,6 +595,49 @@ create index user_footprint_goods_id on user (goods_id);
 
 
 /* ====================================================================================================================
+    sales_channel -- 销售通道
+==================================================================================================================== */
+create table sales_channel
+(
+    id                  bigint          not null        auto_increment                          comment '主键id',
+    name                varchar(63)     not null                                                comment '通道名称',
+    url                 varchar(255)    not null                                                comment '销售页面地址',
+    pic_urls            varchar(2047)                                                           comment '图片地址列表，采用json数组格式',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
+    sort_order          int             not null        default 1000                            comment '排序',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = '销售通道';
+create index sales_channel_name on user (name);
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
+
+
+/* ====================================================================================================================
+    activity_topic -- 活动主题
+==================================================================================================================== */
+create table activity_topic
+(
+    id                  bigint          not null        auto_increment                          comment '主键id',
+    title               varchar(255)    not null                                                comment '活动主题',
+    subtitle            varchar(255)                                                            comment '子标题',
+    content             text                                                                    comment '活动内容',
+    pic_urls            varchar(2047)                                                           comment '图片地址列表，采用json数组格式',
+    -- 待完善
+    sort_order          int             not null        default 1000                            comment '排序',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = '活动主题';
+create index activity_topic_title on user (title);
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
+
+
+/* ====================================================================================================================
     goods_ad -- 商品广告
 ==================================================================================================================== */
 create table goods_ad
@@ -685,197 +724,137 @@ create index user_coupon_coupon_code on user (coupon_code);
 
 
 /* ====================================================================================================================
-    activity_topic -- 活动主题
+    search_keyword -- 热搜关键字
 ==================================================================================================================== */
-create table activity_topic
+create table search_keyword
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    title               varchar(255)    not null                                                comment '活动主题',
-    subtitle            varchar(255)                                                            comment '子标题',
-    content             text                                                                    comment '活动内容',
-    pic_urls            varchar(2047)                                                           comment '图片地址列表，采用json数组格式',
-    -- 待完善
+    keyword             varchar(127)    not null                                                comment '关键字',
+    url                 varchar(255)    not null                                                comment '关键字的跳转链接',
+    is_hot              int(1)          not null        default 0                               comment '是否是热门关键字，0：不是；1：是',
+    is_default          int(1)          not null        default 0                               comment '是否是默认关键字，0：不是；1：是',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
     sort_order          int             not null        default 1000                            comment '排序',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = '活动主题';
-create index activity_topic_title on user (title);
+) comment = '热搜关键字';
+create index search_keyword_keyword on user (keyword);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
-
 
 
 /* ====================================================================================================================
-    aaa -- aaa
+    user_search_history -- 用户搜索历史
 ==================================================================================================================== */
-create table aaa
+create table user_search_history
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    level               int             not null                                                comment '分类层级',
-    name                varchar(63)     not null        unique                                  comment '分类名称',
-    keywords            varchar(1023)                                                           comment '分类关键字，以json数组格式',
-    description         varchar(255)                                                            comment '分类广告语介绍',
-    icon_url            varchar(255)                                                            comment '分类图标',
-    pic_url             varchar(255)                                                            comment '分类图片',
-    sort_order          int             not null        default 1000                            comment '排序',
+    username            varchar(63)     not null                                                comment '登录名',
+    keyword             varchar(127)    not null                                                comment '关键字',
+    source_from         int(1)          not null        default 1                               comment '搜索来源，1：PC；2：H5；3：APP；4：微信小程序',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = 'aaa';
-create index goods_category_parent_id on user (parent_id);
+) comment = '用户搜索历史';
+create index user_search_history_username on user (username);
+create index user_search_history_keyword on user (keyword);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
-create table `litemall_keyword` (
-  `id` int(11) not null auto_increment,
-  `keyword` varchar(127) not null default '' comment '关键字',
-  `url` varchar(255) not null default '' comment '关键字的跳转链接',
-  `is_hot` tinyint(1) not null default '0' comment '是否是热门关键字',
-  `is_default` tinyint(1) not null default '0' comment '是否是默认关键字',
-  `sort_order` int(11) not null default '100' comment '排序',
-  `add_time` datetime default null comment '创建时间',
-  `update_time` datetime default null comment '更新时间',
-  `deleted` tinyint(1) default '0' comment '逻辑删除',
-  primary key (`id`)
-) engine=innodb auto_increment=8 default charset=utf8mb4 comment='关键字表';
-
 
 
 /* ====================================================================================================================
-    search_history -- aaa
+    region -- 行政区域
 ==================================================================================================================== */
-create table aaa
+create table region
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    level               int             not null                                                comment '分类层级',
-    name                varchar(63)     not null        unique                                  comment '分类名称',
-    keywords            varchar(1023)                                                           comment '分类关键字，以json数组格式',
-    description         varchar(255)                                                            comment '分类广告语介绍',
-    icon_url            varchar(255)                                                            comment '分类图标',
-    pic_url             varchar(255)                                                            comment '分类图片',
+    parent_id           bigint          not null                                                comment '父级编号,根节点的父级编号是：-1',
+    full_path           varchar(255)    not null                                                comment '树结构的全路径用“-”隔开,包含自己的id,不包含-1',
+    region_type         int(1)          not null        default 1                               comment '行政区域类型，1：省；2：市；3：县/区',
+    region_name         varchar(63)     not null                                                comment '行政区域名称',
+    region_code         varchar(31)     not null                                                comment '行政区域编码',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
     sort_order          int             not null        default 1000                            comment '排序',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = 'aaa';
-create index goods_category_parent_id on user (parent_id);
+) comment = '行政区域';
+create index region_parent_id on user (parent_id);
+create index region_full_path on user (full_path);
+create index region_region_name on user (region_name);
+create index region_region_code on user (region_code);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
-create table `nideshop_search_history` (
-  `id` int(10) unsigned not null auto_increment comment '主键',
-  `keyword` char(50) not null comment '关键字',
-  `from` varchar(45) default '' comment '搜索来源，如pc、小程序、app等',
-  `add_time` int(11) not null default '0' comment '搜索时间',
-  `user_id` varchar(45) default null comment '会员id',
-  primary key (`id`)
-) engine=innodb auto_increment=48 default charset=utf8;
 
 
 /* ====================================================================================================================
-    region -- aaa
+    dict -- 数据字典
 ==================================================================================================================== */
-create table aaa
+create table dict
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    level               int             not null                                                comment '分类层级',
-    name                varchar(63)     not null        unique                                  comment '分类名称',
-    keywords            varchar(1023)                                                           comment '分类关键字，以json数组格式',
-    description         varchar(255)                                                            comment '分类广告语介绍',
-    icon_url            varchar(255)                                                            comment '分类图标',
-    pic_url             varchar(255)                                                            comment '分类图片',
-    sort_order          int             not null        default 1000                            comment '排序',
+    dict_type           varchar(63)     not null        unique                                  comment '字典分类',
+    description         varchar(1023)   not null                                                comment '描述',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = 'aaa';
-create index goods_category_parent_id on user (parent_id);
+) comment = '数据字典';
+create index dict_dict_type on user (dict_type);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
-create table `litemall_region` (
-  `id` int(11) not null auto_increment,
-  `pid` int(11) not null default '0' comment '行政区域父id，例如区县的pid指向市，市的pid指向省，省的pid则是0',
-  `name` varchar(120) not null default '' comment '行政区域名称',
-  `type` tinyint(3) not null default '0' comment '行政区域类型，如如1则是省， 如果是2则是市，如果是3则是区县',
-  `code` int(11) not null default '0' comment '行政区域编码',
-  primary key (`id`),
-  key `parent_id` (`pid`),
-  key `region_type` (`type`),
-  key `agency_id` (`code`)
-) engine=innodb auto_increment=3232 default charset=utf8mb4 comment='行政区域表';
 
 
 /* ====================================================================================================================
-    region -- aaa
+    dict_item -- 数据字典数据项
 ==================================================================================================================== */
-create table aaa
+create table dict_item
 (
     id                  bigint          not null        auto_increment                          comment '主键id',
-    level               int             not null                                                comment '分类层级',
-    name                varchar(63)     not null        unique                                  comment '分类名称',
-    keywords            varchar(1023)                                                           comment '分类关键字，以json数组格式',
-    description         varchar(255)                                                            comment '分类广告语介绍',
-    icon_url            varchar(255)                                                            comment '分类图标',
-    pic_url             varchar(255)                                                            comment '分类图片',
+    dict_type           varchar(63)     not null                                                comment '字典分类',
+    dict_label          varchar(127)    not null                                                comment '字典键(显示值)',
+    dict_value          varchar(255)    not null                                                comment '字典数据值(隐藏值)',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
     sort_order          int             not null        default 1000                            comment '排序',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
-) comment = 'aaa';
-create index goods_category_parent_id on user (parent_id);
+) comment = '数据字典数据项';
+create index dict_item_dict_type on user (dict_type);
+create index dict_item_dict_label on user (dict_label);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
 
 
+/* ====================================================================================================================
+    dict_item -- 数据字典数据项
+==================================================================================================================== */
+create table dict_item
+(
+    id                  bigint          not null        auto_increment                          comment '主键id',
+    dict_type           varchar(63)     not null                                                comment '字典分类',
+    dict_label          varchar(127)    not null                                                comment '字典键(显示值)',
+    dict_value          varchar(255)    not null                                                comment '字典数据值(隐藏值)',
+    is_show             int(1)          not null        default 1                               comment '是否显示（1：显示；2：隐藏）',
+    sort_order          int             not null        default 1000                            comment '排序',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = '数据字典数据项';
+create index dict_item_dict_type on user (dict_type);
+create index dict_item_dict_label on user (dict_label);
+/*------------------------------------------------------------------------------------------------------------------------
 
-
-
-
+--------------------------------------------------------------------------------------------------------------------------*/
 
 
 /*
-
-
---------------------------------------- 用户相关
-
-
---------------------------------------- 搜索相关
-搜索提示关键字
-nideshop_keywords
-
-搜索历史(用于搜索统计)
-nideshop_search_history
-
---------------------------------------- 商品相关
-商品通道
-nideshop_channel
-
---------------------------------------- 购物车相关
-
---------------------------------------- 订单相关
-
---------------------------------------- 营销相关
-
-
-
---------------------------------------- 客服相关
-
---------------------------------------- 其他
-地区
-nideshop_region
-
-
-
-
-
-
-
-
-
   IndexUrl: ApiRootUrl + 'index/index', //首页数据接口
   CatalogList: ApiRootUrl + 'catalog/index',  //分类目录全部分类数据接口
   CatalogCurrent: ApiRootUrl + 'catalog/current',  //分类目录当前分类数据接口
